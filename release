@@ -1,0 +1,22 @@
+#!/bin/bash -eu
+
+set -o pipefail
+
+readonly VERSION="${1:?}"
+
+cd "$(git rev-parse --show-toplevel)"
+
+cargo set-version "${VERSION}"
+
+cargo upgrade
+cargo update
+
+cargo check
+cargo test --bins
+
+RUST_LOG=warn cargo run -- list-systemd-options > systemd_options.md
+
+git add Cargo.{toml,lock} systemd_options.md
+
+git commit -m "chore: version ${VERSION}"
+git tag -f -m "Version ${VERSION}" "${VERSION}"
